@@ -1,6 +1,6 @@
 # Editor files
-.idea
+.idea/
 
 # Build files
-build
-cmake-*
+build/
+cmake-*/

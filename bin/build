@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# 0. Setup initial values
+cmake_args=${BP_CMAKE_ARGS:-}
+cmake_layer=${CNB_LAYERS_DIR}/cmake
+generator_args=${BP_CMAKE_GENERATOR_ARGS:-}
+
+echo "===> CMake buildpack is starting"
+echo "CMake args are: ${cmake_args}"
+echo "Generator args are: ${generator_args}"
+
+# 1. Create the layer directory
+echo "Creating CMake layer..."
+mkdir -p "${cmake_layer}"
+
+# 2. Setup with CMake
+echo "===> Setting up CMake in $(pwd)/build"
+mkdir -p build/.cmake/api/v1/query
+cd build
+touch .cmake/api/v1/query/codemodel-v2
+eval cmake ../ "${cmake_args}"
+
+# 3. Get CMake properties
+cmake_generator=$(cat .cmake/api/v1/reply/index-*.json | jq -r '.cmake.generator.name')
+echo "Identified CMake generator: ${cmake_generator}"
+
+cmake_raw_artifacts=$(cat .cmake/api/v1/reply/target-*.json | jq -r '.artifacts[].path')
+cmake_artifacts=()
+for cmake_artifact in $cmake_raw_artifacts
+do
+   echo "Identified CMake artifact: ${cmake_artifact}"
+   cmake_artifacts+=("${cmake_artifact}")
+done
+
+# 4. Build with the chosen generator
+if [[ "${cmake_generator}" == "Unix Makefiles" ]]; then
+   echo "===> Building with Make"
+   eval make "${generator_args}"
+elif [[ "${cmake_generator}" == "Ninja" ]]; then
+   echo "===> Building with Ninja"
+   eval ninja "${generator_args}"
+else
+   echo "Chosen generator '${cmake_generator}' is not supported! Please use Unix Makefiles or Ninja."
+   exit 1
+fi
+
+echo "===> CMake build is done"
+
+# 5. Copy runtime files
+echo "Copying runtime files..."
+for cmake_artifact in "${cmake_artifacts[@]}"
+do
+	echo "Copying CMake artifact: ${cmake_artifact}"
+	cp "${cmake_artifact}" "${cmake_layer}/"
+done
+find ./ -type f -name "*.so" -exec cp "{}" "${cmake_layer}/" \;
+
+# 6. Tidy up workspace
+echo "Tidying up workspace..."
+rm -rf /workspace/*
+
+# 7. Make cmake available during launch and cache it
+echo "Making layer available during launch..."
+echo -e '[types]\ncache = true\nlaunch = true' > "${CNB_LAYERS_DIR}/cmake.toml"
+
+# 8. Set default start command
+echo "Setting Docker entrypoint as buildpack command..."
+cmake_first_artifact=${cmake_artifacts[0]}
+echo "First CMake artifact: ${cmake_first_artifact}"
+cat > "${CNB_LAYERS_DIR}/launch.toml" << EOL
+[[processes]]
+type = "web"
+command = ["${cmake_layer}/${cmake_first_artifact}"]
+default = true
+EOL
+
+echo "===> CMake buildpack is done!"
