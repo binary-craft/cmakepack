@@ -1,0 +1,31 @@
+name: Build
+on:
+  push:
+    branches-ignore: [main]
+    paths-ignore: ['**.md', '.gitignore', 'LICENSE']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up pack
+        uses: buildpacks/github-actions/setup-pack@v5.5.1
+
+      - name: Set up tools
+        uses: buildpacks/github-actions/setup-tools@v5.5.1
+
+      - name: Get buildpack metadata
+        id: metadata
+        run: bash scripts/get-metadata.sh
+
+      - name: Package buildpack ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }}
+        run: pack buildpack package ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }} --config ./package.toml
+
+      - name: Run test
+        working-directory: test
+        run: bash run-test.sh

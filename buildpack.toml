@@ -1,0 +1,26 @@
+api = "0.9"
+
+[buildpack]
+  id = "pimhuisman/cmakepack"
+  name = "CMake Buildpack"
+  version = "0.1.0"
+  description = "Cloud Native Buildpack for C and C++ with CMake"
+
+[[targets]]
+  os = "darwin"
+  arch = "amd64"
+
+[[targets]]
+  os = "darwin"
+  arch = "arm64"
+
+[[targets]]
+  os = "linux"
+  arch = "amd64"
+
+[[targets]]
+  os = "linux"
+  arch = "arm64"
+
+[[stacks]]
+  id = "com.github.pimhuisman.stacks.hera"

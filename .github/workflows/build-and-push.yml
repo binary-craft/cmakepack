@@ -1,0 +1,40 @@
+name: Build and push
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', '.gitignore', 'LICENSE']
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up pack
+        uses: buildpacks/github-actions/setup-pack@v5.5.1
+
+      - name: Set up tools
+        uses: buildpacks/github-actions/setup-tools@v5.5.1
+
+      - name: Get buildpack metadata
+        id: metadata
+        run: bash scripts/get-metadata.sh
+
+      - name: Package buildpack ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }}
+        run: pack buildpack package ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }} --config ./package.toml
+
+      - name: Run test
+        working-directory: test
+        run: bash run-test.sh
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push buildpack ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }} to Docker hub
+        run: docker push ${{ steps.metadata.outputs.id }}:${{ steps.metadata.outputs.version }}
