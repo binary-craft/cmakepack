@@ -1,5 +1,5 @@
 # Cloud Native Buildpack for C and C++ with CMake
-[![Build and push](https://github.com/pim-huisman/cmakepack/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/pim-huisman/cmakepack/actions/workflows/build-and-push.yml)
+[![Build and push](https://github.com/binary-craft/cmakepack/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/binary-craft/cmakepack/actions/workflows/build-and-push.yml)
 
 ## About
 This project is used to create a Cloud Native Buildpack for CMake that can be used for native applications such as C and C++.
@@ -7,16 +7,16 @@ This project is used to create a Cloud Native Buildpack for CMake that can be us
 ## Using the buildpack
 The published buildpack will be made available on Docker hub. This project contains the source and is used to build it.
 
-See [Docker hub](https://hub.docker.com/r/pimhuisman/cmakepack).
+See [Docker hub](https://hub.docker.com/r/bincraft/cmakepack).
 
-```docker pull pimhuisman/cmakepack:<version>```
+```docker pull bincraft/cmakepack:<version>```
 
 ## Building images with the buildpack
 There are two options for using this buildpack:
-- Using a builder image that includes it, for example [pim-huisman/hera-builder](https://github.com/pim-huisman/hera-builder).
+- Using a builder image that includes it, for example [binary-craft/hera-builder](https://github.com/binary-craft/hera-builder).
 - Adding it directly on the commandline, this can be done like follows:
 
-```pack build my-app -b pimhuisman/cmakepack:<version>```
+```pack build my-app -b bincraft/cmakepack:<version>```
 
 ### Arguments to pass to the build script
 The buildpack has some environment variables / arguments that can be set to customise the build.
